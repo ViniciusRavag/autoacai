@@ -89,7 +89,7 @@
                 ],
                 sizes: [
                     { name: "200 ML", price: 9.00, image: "https://raw.githubusercontent.com/rayaneacacio/Acai-Ruby/refs/heads/main/src/assets/acai_tradicional.png" },
-                    { name: "300 ML", price: 11.00, image: "hhttps://raw.githubusercontent.com/rayaneacacio/Acai-Ruby/refs/heads/main/src/assets/acai_tradicional.png" },
+                    { name: "300 ML", price: 11.00, image: "https://raw.githubusercontent.com/rayaneacacio/Acai-Ruby/refs/heads/main/src/assets/acai_tradicional.png" },
                     { name: "400 ML", price: 13.00, image: "https://raw.githubusercontent.com/rayaneacacio/Acai-Ruby/refs/heads/main/src/assets/acai_tradicional.png" },
                     { name: "500 ML", price: 20.00, image: "https://raw.githubusercontent.com/rayaneacacio/Acai-Ruby/refs/heads/main/src/assets/acai_tradicional.png" },
                 ],
@@ -218,6 +218,7 @@
                             ${step === 0 ? 'w-48 h-48 rounded-2xl' : 'w-24 h-24 rounded-full'} 
                             object-contain mb-4 transition-all duration-300
                         `}
+                        onError={(e) => { e.target.onerror = null; e.target.src='https://placehold.co/128x128/cccccc/ffffff?text=Imagem'; }}
                     />
                     <h3 className="font-bold text-xl text-center">{item.name}</h3>
                     {item.price !== null && item.price !== 0 && (
@@ -411,7 +412,7 @@
 
             // Função para enviar o pedido via WhatsApp
             const sendWhatsAppMessage = () => {
-                const establishmentNumber = '5511999999999';
+                const establishmentNumber = '5511999999999'; // Substitua pelo número do estabelecimento
                 let message = `Olá! Meu pedido é:\n\n`;
                 message += `*Tipo:* ${order.type?.name}\n`;
                 message += `*Tamanho:* ${order.size?.name} (R$ ${order.size?.price.toFixed(2)})\n`;
@@ -428,13 +429,9 @@
 
             return (
                 <div className="min-h-screen bg-gradient-to-b from-purple-900 to-fuchsia-800 flex flex-col text-white">
-                    <header className="p-6 md:p-8 flex justify-center items-center shadow-lg bg-white/10 backdrop-blur-sm">
-                        <h1 className="text-4xl font-extrabold text-white text-center flex items-center gap-4">
-                            <Icon name="HeartHandshake" size={36} className="text-fuchsia-400" /> Sistema de Autoatendimento Açaí
-                        </h1>
-                    </header>
+                    {/* O cabeçalho foi removido daqui */}
 
-                    <div className="flex-grow flex flex-col items-center justify-center relative">
+                    <div className="flex-grow flex flex-col items-center justify-center relative pt-8">
                         {step >= 2 && step <= 5 && <ProgressBar />}
                         <div className="w-full max-w-screen-xl flex-grow flex flex-col justify-center items-center">
                             {renderStep()}
@@ -496,5 +493,3 @@
     </script>
 </body>
 </html>
-
-

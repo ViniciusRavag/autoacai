@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Autoatendimento Açaí</title>
+    <!-- Incluindo Tailwind CSS para estilização -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Importando React e ReactDOM do CDN -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <!-- Importando Babel Standalone para compilar JSX no navegador -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- Estilos globais -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f3f4f6; /* Cor de fundo leve */
+        }
+        #root {
+            height: 100vh;
+            width: 100vw;
+        }
+    </style>
+</head>
+<body>
+    <!-- A raiz da nossa aplicação React -->
+    <div id="root"></div>
+
+    <!-- O código da aplicação React, com type="text/babel" para Babel compilar o JSX -->
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        
+        // Componente para renderizar ícones SVG diretamente no código
+        const Icon = ({ name, size = 24, className = "" }) => {
+            const icons = {
+                ChevronLeft: `<path d="m15 18-6-6 6-6"/>`,
+                ChevronRight: `<path d="m9 18 6-6-6-6"/>`,
+                Check: `<path d="M20 6 9 17l-5-5"/>`,
+                HeartHandshake: `<path d="M11 14H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h5l1 1 5 6-6 6ZM18 11h3a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-5l-1-1-5-6 6-6Z"/>`,
+                Zap: `<path d="M13 2L3 14h9l-1 8 10-12h-9l1-8Z"/>`
+            };
+
+            const svgContent = icons[name];
+            if (!svgContent) {
+                return null;
+            }
+
+            return (
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width={size}
+                    height={size}
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className={className}
+                    dangerouslySetInnerHTML={{ __html: svgContent }}
+                />
+            );
+        };
+
+        // O componente principal da nossa aplicação React
+        const App = () => {
+            // Definimos os estados da aplicação
+            const [step, setStep] = useState(0);
+            const [order, setOrder] = useState({
+                type: null,
+                size: null,
+                creams: [],
+                complements: [],
+                toppings: [],
+                extras: [],
+            });
+            const [totalPrice, setTotalPrice] = useState(0);
+
+            // Dados do menu para cada etapa
+            const menuData = {
+                types: [
+                    { name: "Açaí Premium", price: null, image: "https://placehold.co/400x400/5B21B6/ffffff?text=Premium", description: "O açaí mais puro e encorpado." },
+                    { name: "Açaí Tradicional", price: null, image: "https://raw.githubusercontent.com/rayaneacacio/Acai-Ruby/refs/heads/main/src/assets/acai_tradicional.png", description: "O sabor clássico que todos amam." },
+                ],
+                sizes: [
+                    { name: "200 ML", price: 9.00, image: "https://placehold.co/128x128/A855F7/ffffff?text=200ML" },
+                    { name: "300 ML", price: 11.00, image: "https://placehold.co/128x128/9333EA/ffffff?text=300ML" },
+                    { name: "400 ML", price: 13.00, image: "https://placehold.co/128x128/7C3AED/ffffff?text=400ML" },
+                    { name: "500 ML", price: 20.00, image: "https://placehold.co/128x128/5B21B6/ffffff?text=500ML" },
+                ],
+                creams: [
+                    { name: "Creme de Ninho", price: 0, image: "https://placehold.co/128x128/C4B5FD/4B0082?text=Ninho" },
+                    { name: "Creme de Avelã", price: 0, image: "https://placehold.co/128x128/A855F7/4B0082?text=Avelã" },
+                    { name: "Cupuaçu", price: 0, image: "https://placehold.co/128x128/9333EA/ffffff?text=Cupuaçu" },
+                    { name: "Morango", price: 0, image: "https://placehold.co/128x128/7C3AED/ffffff?text=Morango" },
+                ],
+                complements: [
+                    { name: "Gotas de Chocolate", price: 0, image: "https://placehold.co/128x128/4B0082/ffffff?text=Chocolate" },
+                    { name: "Granola", price: 0, image: "https://placehold.co/128x128/5B21B6/ffffff?text=Granola" },
+                    { name: "Amendoim", price: 0, image: "https://placehold.co/128x128/7C3AED/ffffff?text=Amendoim" },
+                    { name: "Paçoquita", price: 0, image: "https://placehold.co/128x128/A855F7/ffffff?text=Paçoquita" },
+                    { name: "Leite em Pó", price: 0, image: "https://placehold.co/128x128/C4B5FD/4B0082?text=Leite+em+Pó" },
+                ],
+                toppings: [
+                    { name: "Calda de Chocolate", price: 0, image: "https://placehold.co/128x128/4B0082/ffffff?text=Calda+de+Chocolate" },
+                    { name: "Calda de Morango", price: 0, image: "https://placehold.co/128x128/7C3AED/ffffff?text=Calda+de+Morango" },
+                    { name: "Calda de Caramelo", price: 0, image: "https://placehold.co/128x128/A855F7/ffffff?text=Calda+de+Caramelo" },
+                    { name: "Leite Condensado", price: 0, image: "https://placehold.co/128x128/C4B5FD/4B0082?text=Leite+Condensado" },
+                ],
+                extras: [
+                    { name: "Manga", price: 1.99, image: "https://placehold.co/128x128/7C3AED/ffffff?text=Manga" },
+                    { name: "Banana", price: 1.99, image: "https://placehold.co/128x128/A855F7/ffffff?text=Banana" },
+                    { name: "Kiwi", price: 1.99, image: "https://placehold.co/128x128/9333EA/ffffff?text=Kiwi" },
+                    { name: "Morango", price: 1.99, image: "https://placehold.co/128x128/C4B5FD/4B0082?text=Morango" },
+                    { name: "Disquete", price: 1.99, image: "https://placehold.co/128x128/5B21B6/ffffff?text=Disquete" },
+                ],
+            };
+
+            // Efeitos colaterais para recalcular o total quando o pedido muda
+            useEffect(() => {
+                let total = 0;
+                if (order.size) {
+                    total += order.size.price;
+                }
+                order.extras.forEach(extra => {
+                    total += extra.price;
+                });
+                setTotalPrice(total);
+            }, [order]);
+
+            // Lida com a seleção de cards de tipo único
+            const handleSingleSelect = (category, item) => {
+                setOrder(prevOrder => ({
+                    ...prevOrder,
+                    [category]: item,
+                }));
+            };
+
+            // Lida com a seleção de cards de tipo múltiplo
+            const handleMultiSelect = (category, item, maxItems) => {
+                setOrder(prevOrder => {
+                    const currentItems = prevOrder[category];
+                    const isSelected = currentItems.some(i => i.name === item.name);
+
+                    if (isSelected) {
+                        return {
+                            ...prevOrder,
+                            [category]: currentItems.filter(i => i.name !== item.name),
+                        };
+                    } else if (currentItems.length < maxItems) {
+                        return {
+                            ...prevOrder,
+                            [category]: [...currentItems, item],
+                        };
+                    }
+                    return prevOrder; // Não muda se o limite for atingido
+                });
+            };
+
+            // Valida se a etapa atual pode ser concluída para habilitar o botão "Próximo"
+            const isStepValid = () => {
+                switch (step) {
+                    case 0: // Tipo de Açaí
+                        return !!order.type;
+                    case 1: // Tamanho
+                        return !!order.size;
+                    case 2: // Cremes (máximo 1)
+                        return order.creams.length <= 1;
+                    case 3: // Complementos (máximo 3)
+                        return order.complements.length <= 3;
+                    case 4: // Coberturas (máximo 1)
+                        return order.toppings.length <= 1;
+                    case 5: // Extras (sem limite, sempre válido)
+                        return true;
+                    default:
+                        return false;
+                }
+            };
+            
+            // Reinicia o pedido
+            const startNewOrder = () => {
+                setStep(0);
+                setOrder({
+                    type: null,
+                    size: null,
+                    creams: [],
+                    complements: [],
+                    toppings: [],
+                    extras: [],
+                });
+                setTotalPrice(0);
+            };
+
+            // Componente para renderizar um card de seleção
+            const SelectionCard = ({ item, isSelected, onClick, description }) => (
+                <div
+                    onClick={onClick}
+                    className={`
+                        relative flex flex-col items-center p-4 m-2 rounded-2xl shadow-xl transition-all duration-300
+                        transform hover:scale-105 cursor-pointer bg-white text-purple-900 border-4 border-transparent
+                        ${isSelected ? 'border-purple-500 shadow-purple-500/50 scale-105' : 'hover:border-purple-300'}
+                    `}
+                >
+                    {isSelected && (
+                        <div className="absolute top-2 right-2 bg-purple-500 text-white rounded-full p-1 shadow-md animate-pulse">
+                            <Icon name="Check" size={16} />
+                        </div>
+                    )}
+                    <img
+                        src={item.image}
+                        alt={item.name}
+                        className={`
+                            ${step === 0 ? 'w-48 h-48 rounded-2xl' : 'w-24 h-24 rounded-full'} 
+                            object-contain mb-4 transition-all duration-300
+                        `}
+                    />
+                    <h3 className="font-bold text-xl text-center">{item.name}</h3>
+                    {item.price !== null && item.price !== 0 && (
+                        <p className="text-sm font-semibold text-purple-600 mt-1">R$ {item.price.toFixed(2)}</p>
+                    )}
+                    {description && (
+                        <p className="text-sm text-gray-500 text-center mt-2">{description}</p>
+                    )}
+                </div>
+            );
+            
+            // Renderiza a etapa atual
+            const renderStep = () => {
+                const getMenuData = (category) => menuData[category];
+                
+                switch (step) {
+                    case 0:
+                        return (
+                            <div className="p-8">
+                                <h2 className="text-4xl font-extrabold text-white text-center mb-4">Escolha seu Açaí</h2>
+                                <p className="text-white/80 text-lg text-center max-w-2xl mx-auto mb-10">
+                                    Descubra a diferença entre o Açaí Tradicional, com sabor puro e intenso, e o Açaí Premium, mais cremoso e suave.
+                                </p>
+                                <div className="flex flex-col lg:flex-row justify-center items-center gap-8">
+                                    {menuData.types.map(item => (
+                                        <SelectionCard
+                                            key={item.name}
+                                            item={item}
+                                            isSelected={order.type?.name === item.name}
+                                            onClick={() => handleSingleSelect('type', item)}
+                                            description={item.description}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        );
+                    case 1:
+                        return (
+                            <div className="p-8">
+                                <h2 className="text-4xl font-extrabold text-white text-center mb-4">Qual o Tamanho?</h2>
+                                <p className="text-white/80 text-lg text-center mb-10">
+                                    Selecione o copo perfeito para sua fome!
+                                </p>
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-3xl mx-auto">
+                                    {menuData.sizes.map(item => (
+                                        <SelectionCard
+                                            key={item.name}
+                                            item={item}
+                                            isSelected={order.size?.name === item.name}
+                                            onClick={() => handleSingleSelect('size', item)}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        );
+                    case 2:
+                        return (
+                            <div className="p-8">
+                                <h2 className="text-4xl font-extrabold text-white text-center mb-4">Cremes</h2>
+                                <p className="text-white/80 text-lg text-center mb-10">
+                                    Escolha <strong>1 creme</strong> para adicionar (Grátis!)
+                                </p>
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-3xl mx-auto">
+                                    {menuData.creams.map(item => (
+                                        <SelectionCard
+                                            key={item.name}
+                                            item={item}
+                                            isSelected={order.creams.some(i => i.name === item.name)}
+                                            onClick={() => handleMultiSelect('creams', item, 1)}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        );
+                    case 3:
+                        return (
+                            <div className="p-8">
+                                <h2 className="text-4xl font-extrabold text-white text-center mb-4">Complementos</h2>
+                                <p className="text-white/80 text-lg text-center mb-10">
+                                    Escolha <strong>até 3</strong> complementos (Grátis!)
+                                </p>
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-3xl mx-auto">
+                                    {menuData.complements.map(item => (
+                                        <SelectionCard
+                                            key={item.name}
+                                            item={item}
+                                            isSelected={order.complements.some(i => i.name === item.name)}
+                                            onClick={() => handleMultiSelect('complements', item, 3)}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        );
+                    case 4:
+                        return (
+                            <div className="p-8">
+                                <h2 className="text-4xl font-extrabold text-white text-center mb-4">Coberturas</h2>
+                                <p className="text-white/80 text-lg text-center mb-10">
+                                    Escolha <strong>1 cobertura</strong> para finalizar (Grátis!)
+                                </p>
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-3xl mx-auto">
+                                    {menuData.toppings.map(item => (
+                                        <SelectionCard
+                                            key={item.name}
+                                            item={item}
+                                            isSelected={order.toppings.some(i => i.name === item.name)}
+                                            onClick={() => handleMultiSelect('toppings', item, 1)}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        );
+                    case 5:
+                        return (
+                            <div className="p-8">
+                                <h2 className="text-4xl font-extrabold text-white text-center mb-4">Adicionais</h2>
+                                <p className="text-white/80 text-lg text-center mb-10">
+                                    Escolha seus <strong>extras</strong> (R$ 1,99 cada)
+                                </p>
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-3xl mx-auto">
+                                    {menuData.extras.map(item => (
+                                        <SelectionCard
+                                            key={item.name}
+                                            item={item}
+                                            isSelected={order.extras.some(i => i.name === item.name)}
+                                            onClick={() => handleMultiSelect('extras', item, Infinity)}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        );
+                    case 6: // Tela de resumo
+                        return (
+                            <div className="p-8 flex flex-col justify-center items-center h-full">
+                                <h2 className="text-4xl font-extrabold text-purple-900 text-center mb-8">Seu Pedido</h2>
+                                <div className="bg-white rounded-2xl shadow-xl p-6 md:p-10 max-w-2xl mx-auto w-full">
+                                    <h3 className="text-2xl font-bold mb-4 text-purple-700">{order.type?.name}</h3>
+                                    <ul className="space-y-3 text-lg text-gray-700">
+                                        <li><strong>Tamanho:</strong> {order.size?.name || 'Não selecionado'}</li>
+                                        <li><strong>Cremes:</strong> {order.creams.map(i => i.name).join(', ') || 'Nenhum'}</li>
+                                        <li><strong>Complementos:</strong> {order.complements.map(i => i.name).join(', ') || 'Nenhum'}</li>
+                                        <li><strong>Coberturas:</strong> {order.toppings.map(i => i.name).join(', ') || 'Nenhuma'}</li>
+                                        <li><strong>Extras:</strong> {order.extras.map(i => `${i.name} (R$ ${i.price.toFixed(2)})`).join(', ') || 'Nenhum'}</li>
+                                    </ul>
+                                    <div className="mt-8 pt-6 border-t-2 border-purple-100 flex justify-between items-center">
+                                        <span className="text-3xl font-extrabold text-purple-900">Total:</span>
+                                        <span className="text-3xl font-extrabold text-purple-900">R$ {totalPrice.toFixed(2)}</span>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={startNewOrder}
+                                    className="mt-8 px-6 py-3 bg-purple-600 text-white font-bold rounded-full hover:bg-purple-700 transition-colors shadow-lg"
+                                >
+                                    Fazer Novo Pedido
+                                </button>
+                            </div>
+                        );
+                    default:
+                        return null;
+                }
+            };
+            
+            // Componente para a barra de progresso
+            const ProgressBar = () => {
+                const steps = ["Cremes", "Complementos", "Coberturas", "Adicionais", "Resumo"];
+                return (
+                    <div className="flex justify-between items-center w-full max-w-4xl px-4 py-6">
+                        {steps.map((stepName, index) => {
+                            // O step da ProgressBar começa a partir do step 2 do estado
+                            const adjustedIndex = index + 2; 
+                            return (
+                                <div key={index} className="flex-1 flex flex-col items-center">
+                                    <div className={`
+                                        w-10 h-10 rounded-full flex items-center justify-center font-bold text-white transition-all duration-300
+                                        ${step === adjustedIndex ? 'bg-white text-purple-800 scale-125 shadow-lg' : step > adjustedIndex ? 'bg-purple-300' : 'bg-purple-500'}
+                                    `}>
+                                        {step > adjustedIndex ? <Icon name="Check" size={20} /> : index + 1}
+                                    </div>
+                                    <span className={`
+                                        mt-2 text-xs text-white text-center font-semibold transition-all duration-300
+                                        ${step === adjustedIndex ? 'text-lg font-bold' : 'opacity-70'}
+                                    `}>
+                                        {stepName}
+                                    </span>
+                                </div>
+                            );
+                        })}
+                    </div>
+                );
+            };
+
+            // Função para enviar o pedido via WhatsApp
+            const sendWhatsAppMessage = () => {
+                const establishmentNumber = '5511999999999';
+                let message = `Olá! Meu pedido é:\n\n`;
+                message += `*Tipo:* ${order.type?.name}\n`;
+                message += `*Tamanho:* ${order.size?.name} (R$ ${order.size?.price.toFixed(2)})\n`;
+                message += `*Cremes:* ${order.creams.map(i => i.name).join(', ') || 'Nenhum'}\n`;
+                message += `*Complementos:* ${order.complements.map(i => i.name).join(', ') || 'Nenhum'}\n`;
+                message += `*Coberturas:* ${order.toppings.map(i => i.name).join(', ') || 'Nenhuma'}\n`;
+                message += `*Extras:* ${order.extras.map(i => i.name).join(', ') || 'Nenhum'}\n\n`;
+                message += `*Total:* R$ ${totalPrice.toFixed(2)}\n\n`;
+                message += `Por favor, me ajude a finalizar o pagamento.`;
+
+                const whatsappUrl = `https://api.whatsapp.com/send?phone=${establishmentNumber}&text=${encodeURIComponent(message)}`;
+                window.open(whatsappUrl, '_blank');
+            };
+
+            return (
+                <div className="min-h-screen bg-gradient-to-b from-purple-900 to-fuchsia-800 flex flex-col text-white">
+                    <header className="p-6 md:p-8 flex justify-center items-center shadow-lg bg-white/10 backdrop-blur-sm">
+                        <h1 className="text-4xl font-extrabold text-white text-center flex items-center gap-4">
+                            <Icon name="HeartHandshake" size={36} className="text-fuchsia-400" /> Açaí da Ruby
+                        </h1>
+                    </header>
+
+                    <div className="flex-grow flex flex-col items-center justify-center relative">
+                        {step >= 2 && step <= 5 && <ProgressBar />}
+                        <div className="w-full max-w-screen-xl flex-grow flex flex-col justify-center items-center">
+                            {renderStep()}
+                        </div>
+                    </div>
+
+                    <footer className="bg-white text-purple-900 p-4 md:p-6 shadow-xl rounded-t-3xl flex justify-between items-center sticky bottom-0">
+                        {step < 6 ? (
+                            <>
+                                <button
+                                    onClick={() => setStep(s => s - 1)}
+                                    disabled={step === 0}
+                                    className="flex items-center px-4 py-2 rounded-full font-bold transition-all duration-300 text-purple-800
+                                                bg-purple-100 hover:bg-purple-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    <Icon name="ChevronLeft" size={20} className="mr-2" />
+                                    Anterior
+                                </button>
+                                <div className="text-center">
+                                    <p className="text-xl font-bold">Total: R$ {totalPrice.toFixed(2)}</p>
+                                    <p className="text-sm text-gray-500">Seu pedido atual</p>
+                                </div>
+                                <button
+                                    onClick={() => setStep(s => s + 1)}
+                                    disabled={!isStepValid()}
+                                    className="flex items-center px-4 py-2 rounded-full font-bold transition-all duration-300
+                                                bg-purple-800 text-white hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    Próximo
+                                    <Icon name="ChevronRight" size={20} className="ml-2" />
+                                </button>
+                            </>
+                        ) : (
+                             <div className="flex justify-center items-center w-full">
+                                <button
+                                    onClick={sendWhatsAppMessage}
+                                    className="flex items-center px-6 py-3 rounded-full font-extrabold text-lg transition-all duration-300
+                                               bg-green-500 text-white hover:bg-green-600 shadow-lg shadow-green-500/50"
+                                >
+                                    <Icon name="Zap" size={24} className="mr-3 animate-pulse" />
+                                    Finalizar Pedido
+                                    <Icon name="ChevronRight" size={20} className="ml-3" />
+                                </button>
+                             </div>
+                        )}
+                    </footer>
+                </div>
+            );
+        };
+
+        // Configuração para renderizar o componente React
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(
+            <React.StrictMode>
+                <App />
+            </React.StrictMode>
+        );
+
+    </script>
+</body>
+</html>
